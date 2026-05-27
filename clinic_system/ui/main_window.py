@@ -1,4 +1,6 @@
-"""Main window with sidebar navigation."""
+"""Main window with sidebar navigation - All UI pages consolidated."""
+
+# All page classes are defined in this single file to avoid import issues
 import sys
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QPushButton,
                              QStackedWidget, QLabel, QLineEdit, QMessageBox,
