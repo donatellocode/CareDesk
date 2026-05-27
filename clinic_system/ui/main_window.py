@@ -36,7 +36,6 @@ class MainWindow:
         from .medicines import MedicinesPage
         from .appointments import AppointmentsPage
         from .prescriptions import PrescriptionsPage
-        from .dashboard import DashboardPage
         
         self.stacked_widget.addWidget(DashboardPage(self))
         self.stacked_widget.addWidget(PatientsPage(self))
