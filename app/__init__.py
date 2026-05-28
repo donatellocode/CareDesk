@@ -11,6 +11,11 @@ def create_app(config_name=None):
     if config_name is None:
         config_name = os.environ.get('FLASK_ENV', 'development')
     
+    # Ensure instance directory exists
+    instance_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'instance')
+    if not os.path.exists(instance_path):
+        os.makedirs(instance_path)
+    
     app = Flask(__name__)
     app.config.from_object(config[config_name])
     

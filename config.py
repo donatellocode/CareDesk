@@ -1,10 +1,18 @@
 import os
 from datetime import timedelta
 
+def _get_base_path():
+    return os.path.dirname(os.path.abspath(__file__))
+
+def _ensure_instance_dir():
+    instance_path = os.path.join(_get_base_path(), 'instance')
+    if not os.path.exists(instance_path):
+        os.makedirs(instance_path)
+
 class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key-change-in-production'
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
-        'sqlite:///' + os.path.join(os.path.dirname(os.path.abspath(__file__)), 'instance', 'caredesk.db')
+        'sqlite:///' + os.path.join(_get_base_path(), 'instance', 'caredesk.db')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ENGINE_OPTIONS = {
         'pool_pre_ping': True,
