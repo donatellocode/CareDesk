@@ -2,11 +2,9 @@ import logging
 import os
 from flask import Flask, jsonify, render_template
 from flask_sqlalchemy import SQLAlchemy
-from flask_migrate import Migrate
 from config import config
 
 db = SQLAlchemy()
-migrate = Migrate()
 
 
 def create_app(config_name=None):
@@ -17,7 +15,12 @@ def create_app(config_name=None):
     app.config.from_object(config[config_name])
     
     db.init_app(app)
-    migrate.init_app(app, db)
+    
+    # Import Flask-Migrate only in production or when needed
+    if config_name != 'testing':
+        from flask_migrate import Migrate
+        migrate = Migrate()
+        migrate.init_app(app, db)
     
     from app.routes import patients, appointments, visits, medicines, prescriptions, home
     app.register_blueprint(patients.bp)
