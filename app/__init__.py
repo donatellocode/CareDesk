@@ -11,19 +11,36 @@ def create_app(config_name=None):
     if config_name is None:
         config_name = os.environ.get('FLASK_ENV', 'development')
     
+    # Get the base directory (parent of app folder)
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    
     # Ensure instance directory exists
-    instance_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'instance')
+    instance_path = os.path.join(base_dir, 'instance')
     if not os.path.exists(instance_path):
         os.makedirs(instance_path)
+        print(f"Created instance directory: {instance_path}")
     
     app = Flask(__name__)
     app.config.from_object(config[config_name])
     
+    # Debug: print actual DB path being used
+    db_uri = app.config.get('SQLALCHEMY_DATABASE_URI', '')
+    print(f"Database URI: {db_uri}")
+    print(f"Instance path: {instance_path}")
+    
     db.init_app(app)
     
-    # Create all database tables
+    # Create all database tables - MUST import models first
     with app.app_context():
+        from app.models import Patient, Appointment, Visit, Medicine, Prescription, PrescriptionItem
         db.create_all()
+        print("Database tables created/verified")
+        
+        # Verify tables exist
+        from sqlalchemy import inspect
+        inspector = inspect(db.engine)
+        tables = inspector.get_table_names()
+        print(f"Tables in database: {tables}")
     
     # Import Flask-Migrate only in production or when needed
     if config_name != 'testing':
