@@ -11,8 +11,14 @@ def _ensure_instance_dir():
 
 class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key-change-in-production'
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
-        'sqlite:///' + os.path.join(_get_base_path(), 'instance', 'caredesk.db')
+    
+    @property
+    def SQLALCHEMY_DATABASE_URI(self):
+        db_url = os.environ.get('DATABASE_URL')
+        if db_url:
+            return db_url
+        db_path = os.path.join(_get_base_path(), 'instance', 'caredesk.db')
+        return 'sqlite:///' + db_path
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ENGINE_OPTIONS = {
         'pool_pre_ping': True,
