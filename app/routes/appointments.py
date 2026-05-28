@@ -1,4 +1,5 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, jsonify, request
+from flask_login import login_required, current_user
 from app import db
 from app.models import Appointment, Patient
 from app.forms import AppointmentForm
@@ -8,6 +9,7 @@ bp = Blueprint('appointments', __name__, url_prefix='/appointments')
 
 
 @bp.route('/')
+@login_required
 def list():
     selected_date = request.args.get('date')
     page = request.args.get('page', 1, type=int)
@@ -29,6 +31,7 @@ def list():
 
 
 @bp.route('/new', methods=['GET', 'POST'])
+@login_required
 def new():
     form = AppointmentForm()
     patients = Patient.query.order_by(Patient.name).all()
@@ -50,6 +53,7 @@ def new():
 
 
 @bp.route('/<int:id>/edit', methods=['GET', 'POST'])
+@login_required
 def edit(id):
     appointment = Appointment.query.get_or_404(id)
     form = AppointmentForm(obj=appointment)
@@ -65,6 +69,7 @@ def edit(id):
 
 
 @bp.route('/<int:id>/delete', methods=['POST'])
+@login_required
 def delete(id):
     appointment = Appointment.query.get_or_404(id)
     db.session.delete(appointment)
@@ -74,6 +79,7 @@ def delete(id):
 
 
 @bp.route('/<int:id>/status/<string:status>')
+@login_required
 def update_status(id, status):
     appointment = Appointment.query.get_or_404(id)
     appointment.status = status

@@ -1,4 +1,5 @@
 from flask import Blueprint, render_template, request
+from flask_login import login_required, current_user
 from app import db
 from app.models import Patient, Appointment, Visit, Medicine, Prescription
 from sqlalchemy import func
@@ -7,6 +8,7 @@ from datetime import date
 bp = Blueprint('home', __name__)
 
 @bp.route('/')
+@login_required
 def index():
     today = date.today()
     

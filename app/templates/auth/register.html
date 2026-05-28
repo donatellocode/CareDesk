@@ -1,0 +1,73 @@
+{% extends "auth_base.html" %}
+
+{% block title %}Register - CareDesk{% endblock %}
+
+{% block auth_content %}
+<div class="login-container" style="max-width: 500px;">
+    <div class="login-header">
+        <div class="logo">
+            <span class="logo-icon">🏥</span>
+            <span class="logo-text">CareDesk</span>
+        </div>
+        <p class="tagline">Create New User Account</p>
+    </div>
+    
+    <form method="POST" class="login-form">
+        <div class="form-group">
+            <label for="full_name">
+                <i class="fas fa-user-circle"></i> Full Name
+            </label>
+            <input type="text" id="full_name" name="full_name" required autofocus placeholder="Dr. John Smith">
+        </div>
+        
+        <div class="form-group">
+            <label for="username">
+                <i class="fas fa-at"></i> Username
+            </label>
+            <input type="text" id="username" name="username" required placeholder="jsmith">
+        </div>
+        
+        <div class="form-group">
+            <label for="email">
+                <i class="fas fa-envelope"></i> Email
+            </label>
+            <input type="email" id="email" name="email" required placeholder="doctor@clinic.com">
+        </div>
+        
+        <div class="form-group">
+            <label for="password">
+                <i class="fas fa-lock"></i> Password
+            </label>
+            <input type="password" id="password" name="password" required placeholder="Min. 6 characters">
+        </div>
+        
+        <div class="form-group">
+            <label for="confirm_password">
+                <i class="fas fa-lock"></i> Confirm Password
+            </label>
+            <input type="password" id="confirm_password" name="confirm_password" required placeholder="Repeat password">
+        </div>
+        
+        <div class="form-group">
+            <label for="role">
+                <i class="fas fa-user-md"></i> Role
+            </label>
+            <select id="role" name="role" style="width: 100%; padding: 14px 16px; border: 2px solid #e9ecef; border-radius: 12px; font-size: 15px; background: #f8f9fa;">
+                <option value="doctor">Doctor</option>
+                <option value="nurse">Nurse</option>
+                <option value="admin">Administrator</option>
+            </select>
+        </div>
+        
+        <button type="submit" class="btn btn-primary btn-block">
+            <i class="fas fa-user-plus"></i> Create Account
+        </button>
+    </form>
+    
+    <div class="login-footer">
+        <a href="{{ url_for('auth.users') }}" class="btn btn-secondary btn-block">
+            <i class="fas fa-arrow-left"></i> Back to Users
+        </a>
+    </div>
+</div>
+{% endblock %}

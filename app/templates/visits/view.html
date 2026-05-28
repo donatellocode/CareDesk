@@ -27,6 +27,12 @@
         <span class="detail-label">Date</span>
         <span class="detail-value">{{ visit.date.strftime('%Y-%m-%d') }}</span>
     </div>
+    {% if visit.appointment %}
+    <div class="detail-row">
+        <span class="detail-label">Related Appointment</span>
+        <span class="detail-value">#{{ visit.appointment.id }} - {{ visit.appointment.date }} at {{ visit.appointment.time }}</span>
+    </div>
+    {% endif %}
     <div class="detail-row">
         <span class="detail-label">Diagnosis</span>
         <span class="detail-value">{{ visit.diagnosis or '-' }}</span>
@@ -37,5 +43,11 @@
     </div>
 </div>
 
-<a href="{{ url_for('visits.list') }}" class="btn btn-primary">← Back to Visits</a>
+<div class="card">
+    <h2>Related Records</h2>
+    <div class="quick-actions">
+        <a href="{{ url_for('prescriptions.new') }}?visit_id={{ visit.id }}&patient_id={{ visit.patient_id }}" class="btn btn-primary">+ Create Prescription</a>
+        <a href="{{ url_for('visits.list') }}" class="btn btn-secondary">← Back to Visits</a>
+    </div>
+</div>
 {% endblock %}

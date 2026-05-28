@@ -1,10 +1,12 @@
 import logging
 import os
-from flask import Flask, jsonify, render_template
+from flask import Flask, jsonify, render_template, request
 from flask_sqlalchemy import SQLAlchemy
+from flask_login import LoginManager
 from config import config
 
 db = SQLAlchemy()
+login_manager = LoginManager()
 
 
 def create_app(config_name=None):
@@ -28,13 +30,26 @@ def create_app(config_name=None):
     print(f"Database URI: {db_uri}")
     print(f"Instance path: {instance_path}")
     
+    # Initialize extensions
     db.init_app(app)
+    login_manager.init_app(app)
+    login_manager.login_view = 'auth.login'
+    login_manager.login_message = 'Please log in to access this page.'
+    login_manager.login_message_category = 'warning'
     
     # Create all database tables - MUST import models first
     with app.app_context():
-        from app.models import Patient, Appointment, Visit, Medicine, Prescription, PrescriptionItem
+        from app.models import Patient, Appointment, Visit, Medicine, Prescription, PrescriptionItem, User
         db.create_all()
         print("Database tables created/verified")
+        
+        # Create default admin user if not exists
+        if not User.query.filter_by(username='admin').first():
+            admin = User(username='admin', email='admin@caredesk.com', full_name='System Admin', role='admin')
+            admin.set_password('admin123')
+            db.session.add(admin)
+            db.session.commit()
+            print("Default admin user created (username: admin, password: admin123)")
         
         # Verify tables exist
         from sqlalchemy import inspect
@@ -48,13 +63,14 @@ def create_app(config_name=None):
         migrate = Migrate()
         migrate.init_app(app, db)
     
-    from app.routes import patients, appointments, visits, medicines, prescriptions, home
+    from app.routes import patients, appointments, visits, medicines, prescriptions, home, auth
     app.register_blueprint(patients.bp)
     app.register_blueprint(appointments.bp)
     app.register_blueprint(visits.bp)
     app.register_blueprint(medicines.bp)
     app.register_blueprint(prescriptions.bp)
     app.register_blueprint(home.bp)
+    app.register_blueprint(auth.bp)
     
     setup_logging(app)
     register_error_handlers(app)

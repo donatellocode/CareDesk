@@ -3,61 +3,116 @@
 {% block title %}Dashboard - CareDesk{% endblock %}
 
 {% block content %}
-<div class="page-header">
-    <h1>🏥 Dashboard</h1>
+<div class="top-bar">
+    <h1 class="page-title">🏥 Dashboard</h1>
+    <div class="top-actions">
+        <span style="color: #6c757d; font-size: 0.9rem;">Welcome back, {{ current_user.full_name }}</span>
+    </div>
 </div>
 
 <div class="stats-grid">
-    <div class="stat-card">
-        <h3>Total Patients</h3>
-        <div class="value">{{ total_patients }}</div>
-    </div>
-    <div class="stat-card">
-        <h3>Today's Appointments</h3>
-        <div class="value">{{ today_appointments }}</div>
-    </div>
-    <div class="stat-card">
-        <h3>Today's Visits</h3>
-        <div class="value">{{ today_visits }}</div>
-    </div>
-    <div class="stat-card">
-        <h3>Medicines</h3>
-        <div class="value">{{ total_medicines }}</div>
-    </div>
+    <a href="{{ url_for('patients.list') }}" class="stat-card" style="text-decoration: none; color: inherit;">
+        <div class="stat-icon patients">
+            <i class="fas fa-users"></i>
+        </div>
+        <div class="stat-info">
+            <h3>{{ total_patients }}</h3>
+            <p>Total Patients</p>
+        </div>
+    </a>
+    <a href="{{ url_for('appointments.list') }}" class="stat-card" style="text-decoration: none; color: inherit;">
+        <div class="stat-icon appointments">
+            <i class="fas fa-calendar-check"></i>
+        </div>
+        <div class="stat-info">
+            <h3>{{ today_appointments }}</h3>
+            <p>Today's Appointments</p>
+        </div>
+    </a>
+    <a href="{{ url_for('visits.list') }}" class="stat-card" style="text-decoration: none; color: inherit;">
+        <div class="stat-icon visits">
+            <i class="fas fa-stethoscope"></i>
+        </div>
+        <div class="stat-info">
+            <h3>{{ today_visits }}</h3>
+            <p>Today's Visits</p>
+        </div>
+    </a>
+    <a href="{{ url_for('medicines.list') }}" class="stat-card" style="text-decoration: none; color: inherit;">
+        <div class="stat-icon medicines">
+            <i class="fas fa-pills"></i>
+        </div>
+        <div class="stat-info">
+            <h3>{{ total_medicines }}</h3>
+            <p>Medicines</p>
+        </div>
+    </a>
 </div>
 
 <div class="card">
-    <h2>📅 Today's Appointments</h2>
+    <div class="card-header">
+        <h2 class="card-title">📅 Today's Appointments</h2>
+        <a href="{{ url_for('appointments.list') }}" class="btn btn-secondary btn-sm">View All</a>
+    </div>
     {% if recent_appointments %}
-    <ul class="recent-list">
-        {% for appt in recent_appointments %}
-        <li>
-            <span><strong>{{ appt.time }}</strong> - {{ appt.patient.name }}</span>
-            <span class="status-badge status-{{ appt.status }}">{{ appt.status }}</span>
-        </li>
-        {% endfor %}
-    </ul>
+    <table>
+        <thead>
+            <tr>
+                <th>Time</th>
+                <th>Patient</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for appt in recent_appointments %}
+            <tr>
+                <td><strong>{{ appt.time }}</strong></td>
+                <td><a href="{{ url_for('patients.view', id=appt.patient_id) }}">{{ appt.patient.name }}</a></td>
+                <td>
+                    <span class="status-badge status-{{ appt.status }}">
+                        {{ appt.status }}
+                    </span>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
     {% else %}
-    <p class="empty-state">No appointments scheduled for today.</p>
+    <div class="empty-state">
+        <i class="fas fa-calendar-times"></i>
+        <p>No appointments scheduled for today</p>
+    </div>
     {% endif %}
 </div>
 
-<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem;">
-    <a href="{{ url_for('patients.list') }}" class="card" style="text-decoration: none; color: inherit;">
-        <h3>👥 Patients</h3>
-        <p>Manage patient records</p>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-top: 20px;">
+    <a href="{{ url_for('patients.list') }}" class="card" style="text-decoration: none; color: inherit; transition: transform 0.3s;">
+        <div style="text-align: center; padding: 20px;">
+            <i class="fas fa-users" style="font-size: 2.5rem; color: #667eea; margin-bottom: 15px;"></i>
+            <h3 style="margin-bottom: 10px; color: #1a2332;">Patients</h3>
+            <p style="color: #6c757d; font-size: 0.9rem;">Manage patient records</p>
+        </div>
     </a>
-    <a href="{{ url_for('appointments.list') }}" class="card" style="text-decoration: none; color: inherit;">
-        <h3>📅 Appointments</h3>
-        <p>Schedule & manage appointments</p>
+    <a href="{{ url_for('appointments.list') }}" class="card" style="text-decoration: none; color: inherit; transition: transform 0.3s;">
+        <div style="text-align: center; padding: 20px;">
+            <i class="fas fa-calendar-plus" style="font-size: 2.5rem; color: #11998e; margin-bottom: 15px;"></i>
+            <h3 style="margin-bottom: 10px; color: #1a2332;">Appointments</h3>
+            <p style="color: #6c757d; font-size: 0.9rem;">Schedule & manage appointments</p>
+        </div>
     </a>
-    <a href="{{ url_for('visits.list') }}" class="card" style="text-decoration: none; color: inherit;">
-        <h3>🩺 Visits</h3>
-        <p>Record patient visits</p>
+    <a href="{{ url_for('visits.list') }}" class="card" style="text-decoration: none; color: inherit; transition: transform 0.3s;">
+        <div style="text-align: center; padding: 20px;">
+            <i class="fas fa-stethoscope" style="font-size: 2.5rem; color: #f5576c; margin-bottom: 15px;"></i>
+            <h3 style="margin-bottom: 10px; color: #1a2332;">Visits</h3>
+            <p style="color: #6c757d; font-size: 0.9rem;">Record patient visits</p>
+        </div>
     </a>
-    <a href="{{ url_for('medicines.list') }}" class="card" style="text-decoration: none; color: inherit;">
-        <h3>💊 Medicines</h3>
-        <p>Medicine inventory</p>
+    <a href="{{ url_for('medicines.list') }}" class="card" style="text-decoration: none; color: inherit; transition: transform 0.3s;">
+        <div style="text-align: center; padding: 20px;">
+            <i class="fas fa-pills" style="font-size: 2.5rem; color: #fa709a; margin-bottom: 15px;"></i>
+            <h3 style="margin-bottom: 10px; color: #1a2332;">Medicines</h3>
+            <p style="color: #6c757d; font-size: 0.9rem;">Medicine inventory</p>
+        </div>
     </a>
 </div>
 {% endblock %}

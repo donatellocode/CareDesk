@@ -1,12 +1,15 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, jsonify, request
+from flask_login import login_required, current_user
 from app import db
 from app.models import Visit, Patient, Appointment
 from app.forms import VisitForm
+from datetime import date
 
 bp = Blueprint('visits', __name__, url_prefix='/visits')
 
 
 @bp.route('/')
+@login_required
 def list():
     page = request.args.get('page', 1, type=int)
     per_page = 20
@@ -15,13 +18,16 @@ def list():
 
 
 @bp.route('/new', methods=['GET', 'POST'])
+@login_required
 def new():
     form = VisitForm()
     patients = Patient.query.order_by(Patient.name).all()
     form.patient_id.choices = [(0, 'Select a patient...')] + [(p.id, p.name) for p in patients]
     
-    appointments = Appointment.query.filter_by(status='waiting').order_by(Appointment.date.desc()).all()
+    appointments = Appointment.query.filter_by(status='waiting').order_by(Appointment.date.desc(), Appointment.time).all()
     form.appointment_id.choices = [(0, 'None')] + [(a.id, f"{a.patient.name} - {a.date} {a.time}") for a in appointments]
+    
+    today_date = date.today()
     
     if form.validate_on_submit():
         visit = Visit(
@@ -32,7 +38,7 @@ def new():
             date=form.date.data
         )
         
-        if form.appointment_id.data:
+        if form.appointment_id.data and form.appointment_id.data != 0:
             appointment = Appointment.query.get(form.appointment_id.data)
             if appointment:
                 appointment.status = 'completed'
@@ -41,16 +47,18 @@ def new():
         db.session.commit()
         flash('Visit recorded successfully!', 'success')
         return redirect(url_for('visits.view', id=visit.id))
-    return render_template('visits/new.html', form=form, patients=patients)
+    return render_template('visits/new.html', form=form, patients=patients, appointments=appointments, today=today_date.strftime('%Y-%m-%d'))
 
 
 @bp.route('/<int:id>')
+@login_required
 def view(id):
     visit = Visit.query.get_or_404(id)
     return render_template('visits/view.html', visit=visit)
 
 
 @bp.route('/<int:id>/edit', methods=['GET', 'POST'])
+@login_required
 def edit(id):
     visit = Visit.query.get_or_404(id)
     form = VisitForm(obj=visit)
@@ -63,6 +71,7 @@ def edit(id):
 
 
 @bp.route('/<int:id>/delete', methods=['POST'])
+@login_required
 def delete(id):
     visit = Visit.query.get_or_404(id)
     db.session.delete(visit)

@@ -1,4 +1,5 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, jsonify, request
+from flask_login import login_required, current_user
 from app import db
 from app.models import Medicine
 from app.forms import MedicineForm
@@ -8,6 +9,7 @@ bp = Blueprint('medicines', __name__, url_prefix='/medicines')
 
 
 @bp.route('/')
+@login_required
 def list():
     search = request.args.get('search', '')
     page = request.args.get('page', 1, type=int)
@@ -22,6 +24,7 @@ def list():
 
 
 @bp.route('/new', methods=['GET', 'POST'])
+@login_required
 def new():
     form = MedicineForm()
     if form.validate_on_submit():
@@ -39,6 +42,7 @@ def new():
 
 
 @bp.route('/<int:id>/edit', methods=['GET', 'POST'])
+@login_required
 def edit(id):
     medicine = Medicine.query.get_or_404(id)
     form = MedicineForm(obj=medicine)
@@ -51,6 +55,7 @@ def edit(id):
 
 
 @bp.route('/<int:id>/delete', methods=['POST'])
+@login_required
 def delete(id):
     medicine = Medicine.query.get_or_404(id)
     db.session.delete(medicine)
