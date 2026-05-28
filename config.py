@@ -4,21 +4,22 @@ from datetime import timedelta
 def _get_base_path():
     return os.path.dirname(os.path.abspath(__file__))
 
-def _ensure_instance_dir():
+def _get_db_uri():
+    """Get database URI, ensuring instance folder exists"""
     instance_path = os.path.join(_get_base_path(), 'instance')
     if not os.path.exists(instance_path):
         os.makedirs(instance_path)
+    
+    db_url = os.environ.get('DATABASE_URL')
+    if db_url:
+        return db_url
+    
+    db_path = os.path.join(_get_base_path(), 'instance', 'caredesk.db')
+    return 'sqlite:///' + db_path
 
 class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key-change-in-production'
-    
-    @property
-    def SQLALCHEMY_DATABASE_URI(self):
-        db_url = os.environ.get('DATABASE_URL')
-        if db_url:
-            return db_url
-        db_path = os.path.join(_get_base_path(), 'instance', 'caredesk.db')
-        return 'sqlite:///' + db_path
+    SQLALCHEMY_DATABASE_URI = _get_db_uri()
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ENGINE_OPTIONS = {
         'pool_pre_ping': True,
