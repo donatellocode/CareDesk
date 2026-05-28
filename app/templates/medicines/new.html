@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}Add Medicine - CareDesk{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>➕ Add Medicine</h1>
+</div>
+
+<div class="card">
+    <form method="POST">
+        <div class="form-group">
+            <label for="name">Name *</label>
+            <input type="text" id="name" name="name" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="category">Category</label>
+            <input type="text" id="category" name="category" placeholder="e.g., Antibiotic, Pain Relief">
+        </div>
+        
+        <div class="form-group">
+            <label for="default_dose">Default Dose</label>
+            <input type="text" id="default_dose" name="default_dose" placeholder="e.g., 500mg twice daily">
+        </div>
+        
+        <div class="form-group">
+            <label for="instructions">Instructions</label>
+            <textarea id="instructions" name="instructions" placeholder="Usage instructions..."></textarea>
+        </div>
+        
+        <div class="actions">
+            <button type="submit" class="btn btn-success">Save Medicine</button>
+            <a href="{{ url_for('medicines.list') }}" class="btn btn-danger">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

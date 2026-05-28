@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}Appointments - CareDesk{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>📅 Appointments</h1>
+    <a href="{{ url_for('appointments.new') }}" class="btn btn-primary">+ New Appointment</a>
+</div>
+
+<div class="card">
+    <form method="GET" class="search-box">
+        <input type="date" name="date" value="{{ selected_date }}">
+        <button type="submit" class="btn btn-primary">Filter by Date</button>
+    </form>
+</div>
+
+<div class="table-container">
+    {% if appointments %}
+    <table>
+        <thead>
+            <tr>
+                <th>Time</th>
+                <th>Patient</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for appt in appointments %}
+            <tr>
+                <td>{{ appt.time }}</td>
+                <td><a href="{{ url_for('patients.view', id=appt.patient_id) }}">{{ appt.patient.name }}</a></td>
+                <td><span class="status-badge status-{{ appt.status }}">{{ appt.status }}</span></td>
+                <td class="actions">
+                    {% if appt.status == 'waiting' %}
+                    <a href="{{ url_for('appointments.update_status', id=appt.id, status='completed') }}" class="btn btn-sm btn-success">Complete</a>
+                    {% endif %}
+                    <a href="{{ url_for('appointments.edit', id=appt.id) }}" class="btn btn-sm btn-warning">Edit</a>
+                    <form method="POST" action="{{ url_for('appointments.delete', id=appt.id) }}" style="display: inline;">
+                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">Cancel</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p class="empty-state">No appointments for this date.</p>
+    {% endif %}
+</div>
+{% endblock %}

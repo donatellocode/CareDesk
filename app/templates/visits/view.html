@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}Visit Details - CareDesk{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>🩺 Visit Details</h1>
+    <div class="actions">
+        <a href="{{ url_for('visits.edit', id=visit.id) }}" class="btn btn-warning">Edit</a>
+        <form method="POST" action="{{ url_for('visits.delete', id=visit.id) }}" style="display: inline;">
+            <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure?')">Delete</button>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <h2>Visit Information</h2>
+    <div class="detail-row">
+        <span class="detail-label">ID</span>
+        <span class="detail-value">{{ visit.id }}</span>
+    </div>
+    <div class="detail-row">
+        <span class="detail-label">Patient</span>
+        <span class="detail-value"><a href="{{ url_for('patients.view', id=visit.patient_id) }}">{{ visit.patient.name }}</a></span>
+    </div>
+    <div class="detail-row">
+        <span class="detail-label">Date</span>
+        <span class="detail-value">{{ visit.date.strftime('%Y-%m-%d') }}</span>
+    </div>
+    <div class="detail-row">
+        <span class="detail-label">Diagnosis</span>
+        <span class="detail-value">{{ visit.diagnosis or '-' }}</span>
+    </div>
+    <div class="detail-row">
+        <span class="detail-label">Notes</span>
+        <span class="detail-value">{{ visit.notes or '-' }}</span>
+    </div>
+</div>
+
+<a href="{{ url_for('visits.list') }}" class="btn btn-primary">← Back to Visits</a>
+{% endblock %}

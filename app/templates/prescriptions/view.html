@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}Prescription Details - CareDesk{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>📋 Prescription #{{ prescription.id }}</h1>
+    <div class="actions">
+        <form method="POST" action="{{ url_for('prescriptions.delete', id=prescription.id) }}" style="display: inline;">
+            <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure?')">Delete</button>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <h2>Prescription Information</h2>
+    <div class="detail-row">
+        <span class="detail-label">ID</span>
+        <span class="detail-value">{{ prescription.id }}</span>
+    </div>
+    <div class="detail-row">
+        <span class="detail-label">Patient</span>
+        <span class="detail-value"><a href="{{ url_for('patients.view', id=prescription.patient_id) }}">{{ prescription.patient.name }}</a></span>
+    </div>
+    <div class="detail-row">
+        <span class="detail-label">Date</span>
+        <span class="detail-value">{{ prescription.date.strftime('%Y-%m-%d') }}</span>
+    </div>
+</div>
+
+<div class="card">
+    <h2>Medicines</h2>
+    {% if prescription.items %}
+    <table>
+        <thead>
+            <tr>
+                <th>Medicine</th>
+                <th>Dose</th>
+                <th>Instructions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in prescription.items %}
+            <tr>
+                <td>{{ item.medicine.name }}</td>
+                <td>{{ item.dose }}</td>
+                <td>{{ item.instructions or '-' }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p class="empty-state">No items in this prescription.</p>
+    {% endif %}
+</div>
+
+<a href="{{ url_for('prescriptions.list') }}" class="btn btn-primary">← Back to Prescriptions</a>
+{% endblock %}

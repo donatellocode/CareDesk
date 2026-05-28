@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block title %}{{ patient.name }} - CareDesk{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>👥 {{ patient.name }}</h1>
+    <div class="actions">
+        <a href="{{ url_for('patients.edit', id=patient.id) }}" class="btn btn-warning">Edit</a>
+        <form method="POST" action="{{ url_for('patients.delete', id=patient.id) }}" style="display: inline;">
+            <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure?')">Delete</button>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <h2>Patient Information</h2>
+    <div class="detail-row">
+        <span class="detail-label">ID</span>
+        <span class="detail-value">{{ patient.id }}</span>
+    </div>
+    <div class="detail-row">
+        <span class="detail-label">Name</span>
+        <span class="detail-value">{{ patient.name }}</span>
+    </div>
+    <div class="detail-row">
+        <span class="detail-label">Age</span>
+        <span class="detail-value">{{ patient.age or '-' }}</span>
+    </div>
+    <div class="detail-row">
+        <span class="detail-label">Gender</span>
+        <span class="detail-value">{{ patient.gender or '-' }}</span>
+    </div>
+    <div class="detail-row">
+        <span class="detail-label">Phone</span>
+        <span class="detail-value">{{ patient.phone or '-' }}</span>
+    </div>
+    <div class="detail-row">
+        <span class="detail-label">Notes</span>
+        <span class="detail-value">{{ patient.notes or '-' }}</span>
+    </div>
+    <div class="detail-row">
+        <span class="detail-label">Registered</span>
+        <span class="detail-value">{{ patient.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+    </div>
+</div>
+
+<div class="card">
+    <h2>Appointments</h2>
+    {% if patient.appointments %}
+    <ul class="recent-list">
+        {% for appt in patient.appointments %}
+        <li>
+            <span>{{ appt.date }} at {{ appt.time }}</span>
+            <span class="status-badge status-{{ appt.status }}">{{ appt.status }}</span>
+        </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p class="empty-state">No appointments</p>
+    {% endif %}
+</div>
+
+<div class="card">
+    <h2>Visits</h2>
+    {% if patient.visits %}
+    <ul class="recent-list">
+        {% for visit in patient.visits %}
+        <li>
+            <span>{{ visit.date }} - {{ visit.diagnosis[:50] or 'No diagnosis' }}</span>
+        </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p class="empty-state">No visits</p>
+    {% endif %}
+</div>
+
+<a href="{{ url_for('patients.list') }}" class="btn btn-primary">← Back to Patients</a>
+{% endblock %}

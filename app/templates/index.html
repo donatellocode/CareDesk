@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - CareDesk{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>🏥 Dashboard</h1>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <h3>Total Patients</h3>
+        <div class="value">{{ total_patients }}</div>
+    </div>
+    <div class="stat-card">
+        <h3>Today's Appointments</h3>
+        <div class="value">{{ today_appointments }}</div>
+    </div>
+    <div class="stat-card">
+        <h3>Today's Visits</h3>
+        <div class="value">{{ today_visits }}</div>
+    </div>
+    <div class="stat-card">
+        <h3>Medicines</h3>
+        <div class="value">{{ total_medicines }}</div>
+    </div>
+</div>
+
+<div class="card">
+    <h2>📅 Today's Appointments</h2>
+    {% if recent_appointments %}
+    <ul class="recent-list">
+        {% for appt in recent_appointments %}
+        <li>
+            <span><strong>{{ appt.time }}</strong> - {{ appt.patient.name }}</span>
+            <span class="status-badge status-{{ appt.status }}">{{ appt.status }}</span>
+        </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p class="empty-state">No appointments scheduled for today.</p>
+    {% endif %}
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem;">
+    <a href="{{ url_for('patients.list') }}" class="card" style="text-decoration: none; color: inherit;">
+        <h3>👥 Patients</h3>
+        <p>Manage patient records</p>
+    </a>
+    <a href="{{ url_for('appointments.list') }}" class="card" style="text-decoration: none; color: inherit;">
+        <h3>📅 Appointments</h3>
+        <p>Schedule & manage appointments</p>
+    </a>
+    <a href="{{ url_for('visits.list') }}" class="card" style="text-decoration: none; color: inherit;">
+        <h3>🩺 Visits</h3>
+        <p>Record patient visits</p>
+    </a>
+    <a href="{{ url_for('medicines.list') }}" class="card" style="text-decoration: none; color: inherit;">
+        <h3>💊 Medicines</h3>
+        <p>Medicine inventory</p>
+    </a>
+</div>
+{% endblock %}

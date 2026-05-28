@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}Patients - CareDesk{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>👥 Patients</h1>
+    <a href="{{ url_for('patients.new') }}" class="btn btn-primary">+ Add Patient</a>
+</div>
+
+<div class="card">
+    <form method="GET" class="search-box">
+        <input type="text" name="search" placeholder="Search by name or phone..." value="{{ search }}">
+        <button type="submit" class="btn btn-primary">Search</button>
+        {% if search %}
+        <a href="{{ url_for('patients.list') }}" class="btn btn-secondary">Clear</a>
+        {% endif %}
+    </form>
+</div>
+
+<div class="table-container">
+    {% if patients %}
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Age</th>
+                <th>Gender</th>
+                <th>Phone</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for patient in patients %}
+            <tr>
+                <td>{{ patient.id }}</td>
+                <td><a href="{{ url_for('patients.view', id=patient.id) }}">{{ patient.name }}</a></td>
+                <td>{{ patient.age or '-' }}</td>
+                <td>{{ patient.gender or '-' }}</td>
+                <td>{{ patient.phone or '-' }}</td>
+                <td class="actions">
+                    <a href="{{ url_for('patients.view', id=patient.id) }}" class="btn btn-sm btn-primary">View</a>
+                    <a href="{{ url_for('patients.edit', id=patient.id) }}" class="btn btn-sm btn-warning">Edit</a>
+                    <form method="POST" action="{{ url_for('patients.delete', id=patient.id) }}" style="display: inline;">
+                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">Delete</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p class="empty-state">No patients found. <a href="{{ url_for('patients.new') }}">Add the first patient</a></p>
+    {% endif %}
+</div>
+{% endblock %}

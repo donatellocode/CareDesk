@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}New Appointment - CareDesk{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>➕ Book Appointment</h1>
+</div>
+
+<div class="card">
+    <form method="POST">
+        <div class="form-group">
+            <label for="patient_id">Patient *</label>
+            <select id="patient_id" name="patient_id" required>
+                <option value="">Select a patient...</option>
+                {% for patient in patients %}
+                <option value="{{ patient.id }}">{{ patient.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="date">Date *</label>
+            <input type="date" id="date" name="date" value="{{ selected_date or '' }}" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="time">Time *</label>
+            <input type="time" id="time" name="time" required>
+        </div>
+        
+        <div class="actions">
+            <button type="submit" class="btn btn-success">Book Appointment</button>
+            <a href="{{ url_for('appointments.list') }}" class="btn btn-danger">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

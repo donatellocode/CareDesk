@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}Medicines - CareDesk{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>💊 Medicines</h1>
+    <a href="{{ url_for('medicines.new') }}" class="btn btn-primary">+ Add Medicine</a>
+</div>
+
+<div class="card">
+    <form method="GET" class="search-box">
+        <input type="text" name="search" placeholder="Search by name or category..." value="{{ search }}">
+        <button type="submit" class="btn btn-primary">Search</button>
+        {% if search %}
+        <a href="{{ url_for('medicines.list') }}" class="btn btn-secondary">Clear</a>
+        {% endif %}
+    </form>
+</div>
+
+<div class="table-container">
+    {% if medicines %}
+    <table>
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Category</th>
+                <th>Default Dose</th>
+                <th>Instructions</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for medicine in medicines %}
+            <tr>
+                <td>{{ medicine.name }}</td>
+                <td>{{ medicine.category or '-' }}</td>
+                <td>{{ medicine.default_dose or '-' }}</td>
+                <td>{{ medicine.instructions[:50] if medicine.instructions else '-' }}</td>
+                <td class="actions">
+                    <a href="{{ url_for('medicines.edit', id=medicine.id) }}" class="btn btn-sm btn-warning">Edit</a>
+                    <form method="POST" action="{{ url_for('medicines.delete', id=medicine.id) }}" style="display: inline;">
+                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">Delete</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p class="empty-state">No medicines found. <a href="{{ url_for('medicines.new') }}">Add the first medicine</a></p>
+    {% endif %}
+</div>
+{% endblock %}

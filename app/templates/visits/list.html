@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block title %}Visits - CareDesk{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>🩺 Visits</h1>
+    <a href="{{ url_for('visits.new') }}" class="btn btn-primary">+ Record Visit</a>
+</div>
+
+<div class="table-container">
+    {% if visits %}
+    <table>
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Patient</th>
+                <th>Diagnosis</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for visit in visits %}
+            <tr>
+                <td>{{ visit.date.strftime('%Y-%m-%d') }}</td>
+                <td><a href="{{ url_for('patients.view', id=visit.patient_id) }}">{{ visit.patient.name }}</a></td>
+                <td>{{ visit.diagnosis[:50] or '-' }}</td>
+                <td class="actions">
+                    <a href="{{ url_for('visits.view', id=visit.id) }}" class="btn btn-sm btn-primary">View</a>
+                    <a href="{{ url_for('visits.edit', id=visit.id) }}" class="btn btn-sm btn-warning">Edit</a>
+                    <form method="POST" action="{{ url_for('visits.delete', id=visit.id) }}" style="display: inline;">
+                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">Delete</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p class="empty-state">No visits recorded.</p>
+    {% endif %}
+</div>
+{% endblock %}
