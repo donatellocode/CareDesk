@@ -21,6 +21,10 @@ def create_app(config_name=None):
     
     db.init_app(app)
     
+    # Create all database tables
+    with app.app_context():
+        db.create_all()
+    
     # Import Flask-Migrate only in production or when needed
     if config_name != 'testing':
         from flask_migrate import Migrate
