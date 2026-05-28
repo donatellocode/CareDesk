@@ -65,6 +65,12 @@ def view(id):
     return render_template('prescriptions/view.html', prescription=prescription)
 
 
+@bp.route('/<int:id>/print')
+def print_view(id):
+    prescription = Prescription.query.get_or_404(id)
+    return render_template('prescriptions/print.html', prescription=prescription)
+
+
 @bp.route('/<int:id>/delete', methods=['POST'])
 def delete(id):
     prescription = Prescription.query.get_or_404(id)

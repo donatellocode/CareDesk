@@ -6,6 +6,7 @@
 <div class="page-header">
     <h1>📋 Prescription #{{ prescription.id }}</h1>
     <div class="actions">
+        <a href="{{ url_for('prescriptions.print_view', id=prescription.id) }}" class="btn btn-secondary" target="_blank">🖨️ Print</a>
         <form method="POST" action="{{ url_for('prescriptions.delete', id=prescription.id) }}" style="display: inline;">
             <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure?')">Delete</button>
         </form>

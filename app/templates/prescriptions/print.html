@@ -1,0 +1,337 @@
+{% extends "base.html" %}
+
+{% block title %}Print Prescription #{{ prescription.id }} - CareDesk{% endblock %}
+
+{% block content %}
+<style>
+    @media print {
+        body * {
+            visibility: hidden;
+        }
+        .print-prescription, .print-prescription * {
+            visibility: visible;
+        }
+        .print-prescription {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+        }
+        .no-print {
+            display: none !important;
+        }
+    }
+    
+    .print-button-container {
+        margin: 20px 0;
+    }
+    
+    .print-prescription {
+        background: white;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 40px;
+        border: 2px solid #2c5282;
+        font-family: 'Times New Roman', serif;
+    }
+    
+    .prescription-header {
+        text-align: center;
+        border-bottom: 2px solid #2c5282;
+        padding-bottom: 20px;
+        margin-bottom: 30px;
+    }
+    
+    .prescription-header h1 {
+        font-size: 28px;
+        color: #2c5282;
+        margin: 0 0 5px 0;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+    }
+    
+    .prescription-header .subtitle {
+        font-size: 14px;
+        color: #666;
+        margin: 0;
+    }
+    
+    .prescription-info {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 30px;
+        padding: 15px;
+        background: #f7fafc;
+        border: 1px solid #e2e8f0;
+    }
+    
+    .prescription-info > div {
+        flex: 1;
+    }
+    
+    .prescription-info .label {
+        font-size: 12px;
+        color: #718096;
+        text-transform: uppercase;
+    }
+    
+    .prescription-info .value {
+        font-size: 16px;
+        color: #2d3748;
+        font-weight: bold;
+    }
+    
+    .patient-section {
+        margin-bottom: 30px;
+        padding: 20px;
+        background: #edf2f7;
+        border-radius: 8px;
+    }
+    
+    .patient-section h3 {
+        margin: 0 0 10px 0;
+        color: #2c5282;
+        font-size: 16px;
+        text-transform: uppercase;
+        border-bottom: 1px solid #cbd5e0;
+        padding-bottom: 5px;
+    }
+    
+    .patient-details {
+        display: flex;
+        gap: 40px;
+        flex-wrap: wrap;
+    }
+    
+    .patient-details .label {
+        font-size: 12px;
+        color: #718096;
+        text-transform: uppercase;
+    }
+    
+    .patient-details .value {
+        font-size: 16px;
+        color: #2d3748;
+        font-weight: bold;
+    }
+    
+    .medicines-section {
+        margin-bottom: 30px;
+    }
+    
+    .medicines-section h3 {
+        color: #2c5282;
+        font-size: 18px;
+        margin-bottom: 15px;
+        text-transform: uppercase;
+        border-bottom: 2px solid #2c5282;
+        padding-bottom: 5px;
+    }
+    
+    .medicine-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .medicine-table th {
+        background: #2c5282;
+        color: white;
+        padding: 12px;
+        text-align: left;
+        font-size: 14px;
+    }
+    
+    .medicine-table td {
+        padding: 15px 12px;
+        border-bottom: 1px solid #e2e8f0;
+        font-size: 14px;
+    }
+    
+    .medicine-table tr:nth-child(even) {
+        background: #f7fafc;
+    }
+    
+    .medicine-number {
+        font-weight: bold;
+        color: #2c5282;
+        width: 40px;
+    }
+    
+    .dose-cell {
+        font-weight: bold;
+        color: #2b6cb0;
+    }
+    
+    .instructions-cell {
+        color: #4a5568;
+        font-style: italic;
+    }
+    
+    .notes-section {
+        margin-bottom: 30px;
+        padding: 15px;
+        background: #fffaf0;
+        border: 1px solid #ecc94b;
+        border-radius: 4px;
+    }
+    
+    .notes-section h4 {
+        margin: 0 0 10px 0;
+        color: #744210;
+        font-size: 14px;
+        text-transform: uppercase;
+    }
+    
+    .notes-section p {
+        margin: 0;
+        color: #744210;
+    }
+    
+    .prescription-footer {
+        margin-top: 40px;
+        padding-top: 20px;
+        border-top: 1px solid #e2e8f0;
+        display: flex;
+        justify-content: space-between;
+    }
+    
+    .doctor-signature {
+        text-align: center;
+        width: 200px;
+    }
+    
+    .signature-line {
+        border-top: 1px solid #2d3748;
+        margin-top: 60px;
+        padding-top: 5px;
+        font-size: 12px;
+        color: #718096;
+    }
+    
+    .qr-section {
+        text-align: right;
+    }
+    
+    .qr-placeholder {
+        width: 80px;
+        height: 80px;
+        border: 1px dashed #cbd5e0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #a0aec0;
+        font-size: 10px;
+        margin-left: auto;
+    }
+    
+    .prescription-id {
+        font-size: 12px;
+        color: #a0aec0;
+        text-align: right;
+        margin-top: 10px;
+    }
+</style>
+
+<div class="print-button-container no-print">
+    <button onclick="window.print()" class="btn btn-primary">🖨️ Print Prescription</button>
+    <a href="{{ url_for('prescriptions.view', id=prescription.id) }}" class="btn btn-secondary">← Back to Details</a>
+</div>
+
+<div class="print-prescription">
+    <div class="prescription-header">
+        <h1>Medical Prescription</h1>
+        <p class="subtitle">CareDesk - Healthcare Management System</p>
+    </div>
+    
+    <div class="prescription-info">
+        <div>
+            <div class="label">Prescription No.</div>
+            <div class="value">{{ '%04d'|format(prescription.id) }}</div>
+        </div>
+        <div>
+            <div class="label">Date</div>
+            <div class="value">{{ prescription.date.strftime('%d %B %Y') }}</div>
+        </div>
+        <div>
+            <div class="label">Status</div>
+            <div class="value">Valid</div>
+        </div>
+    </div>
+    
+    <div class="patient-section">
+        <h3>👤 Patient Information</h3>
+        <div class="patient-details">
+            <div>
+                <div class="label">Name</div>
+                <div class="value">{{ prescription.patient.name }}</div>
+            </div>
+            {% if prescription.patient.age %}
+            <div>
+                <div class="label">Age</div>
+                <div class="value">{{ prescription.patient.age }} years</div>
+            </div>
+            {% endif %}
+            {% if prescription.patient.gender %}
+            <div>
+                <div class="label">Gender</div>
+                <div class="value">{{ prescription.patient.gender }}</div>
+            </div>
+            {% endif %}
+            {% if prescription.patient.phone %}
+            <div>
+                <div class="label">Contact</div>
+                <div class="value">{{ prescription.patient.phone }}</div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="medicines-section">
+        <h3>💊 Prescribed Medications</h3>
+        {% if prescription.items %}
+        <table class="medicine-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Medicine Name</th>
+                    <th>Dosage</th>
+                    <th>Instructions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in prescription.items %}
+                <tr>
+                    <td class="medicine-number">{{ loop.index }}</td>
+                    <td><strong>{{ item.medicine.name }}</strong></td>
+                    <td class="dose-cell">{{ item.dose }}</td>
+                    <td class="instructions-cell">{{ item.instructions or '-' }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p style="text-align: center; color: #718096;">No medications prescribed.</p>
+        {% endif %}
+    </div>
+    
+    {% if prescription.notes %}
+    <div class="notes-section">
+        <h4>📝 Additional Notes</h4>
+        <p>{{ prescription.notes }}</p>
+    </div>
+    {% endif %}
+    
+    <div class="prescription-footer">
+        <div class="doctor-signature">
+            <div class="signature-line">Doctor's Signature</div>
+        </div>
+        <div class="qr-section">
+            <div class="qr-placeholder">QR Code</div>
+        </div>
+    </div>
+    
+    <div class="prescription-id">
+        Document ID: RX-{{ '%04d'|format(prescription.id) }}-{{ prescription.date.strftime('%Y%m%d') }}
+    </div>
+</div>
+{% endblock %}
