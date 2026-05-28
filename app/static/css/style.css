@@ -171,6 +171,11 @@ tr:hover {
     background: #c0392b;
 }
 
+.btn-secondary {
+    background: #95a5a6;
+    color: white;
+}
+
 .btn-sm {
     padding: 0.4rem 0.8rem;
     font-size: 0.8rem;
@@ -205,6 +210,15 @@ tr:hover {
     color: #2c3e50;
 }
 
+.form-control {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 1rem;
+    font-family: inherit;
+}
+
 .form-group input,
 .form-group select,
 .form-group textarea {
@@ -223,10 +237,24 @@ tr:hover {
 
 .form-group input:focus,
 .form-group select:focus,
-.form-group textarea:focus {
+.form-group textarea:focus,
+.form-control:focus {
     outline: none;
     border-color: #3498db;
     box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+}
+
+.form-group input.is-invalid,
+.form-group select.is-invalid,
+.form-group textarea.is-invalid {
+    border-color: #e74c3c;
+}
+
+.error {
+    color: #e74c3c;
+    font-size: 0.85rem;
+    margin-top: 0.25rem;
+    display: block;
 }
 
 .card {
@@ -331,6 +359,13 @@ tr:hover {
     text-align: center;
     padding: 3rem;
     color: #7f8c8d;
+}
+
+.item-row {
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 5px;
+    margin-bottom: 1rem;
 }
 
 @media (max-width: 768px) {

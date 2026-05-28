@@ -9,34 +9,33 @@
 
 <div class="card">
     <form method="POST">
+        {{ form.hidden_tag() if form.hidden_tag }}
+        
         <div class="form-group">
-            <label for="name">Name *</label>
-            <input type="text" id="name" name="name" value="{{ patient.name }}" required>
+            {{ form.name.label }}
+            {{ form.name(class="form-control", value=patient.name) }}
+            {% if form.name.errors %}<span class="error">{{ form.name.errors[0] }}</span>{% endif %}
         </div>
         
         <div class="form-group">
-            <label for="age">Age</label>
-            <input type="number" id="age" name="age" value="{{ patient.age or '' }}" min="0" max="150">
+            {{ form.age.label }}
+            {{ form.age(class="form-control", value=patient.age or '') }}
         </div>
         
         <div class="form-group">
-            <label for="gender">Gender</label>
-            <select id="gender" name="gender">
-                <option value="">Select...</option>
-                <option value="Male" {% if patient.gender == 'Male' %}selected{% endif %}>Male</option>
-                <option value="Female" {% if patient.gender == 'Female' %}selected{% endif %}>Female</option>
-                <option value="Other" {% if patient.gender == 'Other' %}selected{% endif %}>Other</option>
-            </select>
+            {{ form.gender.label }}
+            {{ form.gender(class="form-control") }}
         </div>
         
         <div class="form-group">
-            <label for="phone">Phone</label>
-            <input type="text" id="phone" name="phone" value="{{ patient.phone or '' }}">
+            {{ form.phone.label }}
+            {{ form.phone(class="form-control", value=patient.phone or '') }}
         </div>
         
         <div class="form-group">
-            <label for="notes">Notes</label>
-            <textarea id="notes" name="notes">{{ patient.notes or '' }}</textarea>
+            {{ form.notes.label }}
+            {{ form.notes(class="form-control") }}<br>
+            {{ patient.notes }}
         </div>
         
         <div class="actions">

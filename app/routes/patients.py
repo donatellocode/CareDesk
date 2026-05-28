@@ -1,56 +1,61 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask import Blueprint, render_template, redirect, url_for, flash, jsonify, request
 from app import db
 from app.models import Patient
-from datetime import datetime
+from app.forms import PatientForm
+from sqlalchemy import or_
 
 bp = Blueprint('patients', __name__, url_prefix='/patients')
+
 
 @bp.route('/')
 def list():
     search = request.args.get('search', '')
+    page = request.args.get('page', 1, type=int)
+    per_page = 20
+    
+    query = Patient.query
     if search:
-        patients = Patient.query.filter(
-            (Patient.name.like(f'%{search}%')) | 
-            (Patient.phone.like(f'%{search}%'))
-        ).order_by(Patient.name).all()
-    else:
-        patients = Patient.query.order_by(Patient.name).all()
+        query = query.filter(or_(Patient.name.ilike(f'%{search}%'), Patient.phone.ilike(f'%{search}%')))
+    
+    patients = query.order_by(Patient.name).paginate(page=page, per_page=per_page, error_out=False)
     return render_template('patients/list.html', patients=patients, search=search)
+
 
 @bp.route('/new', methods=['GET', 'POST'])
 def new():
-    if request.method == 'POST':
+    form = PatientForm()
+    if form.validate_on_submit():
         patient = Patient(
-            name=request.form['name'],
-            age=int(request.form['age']) if request.form['age'] else None,
-            phone=request.form.get('phone', ''),
-            gender=request.form.get('gender', ''),
-            notes=request.form.get('notes', '')
+            name=form.name.data,
+            age=form.age.data,
+            phone=form.phone.data,
+            gender=form.gender.data,
+            notes=form.notes.data
         )
         db.session.add(patient)
         db.session.commit()
         flash('Patient created successfully!', 'success')
         return redirect(url_for('patients.list'))
-    return render_template('patients/new.html')
+    return render_template('patients/new.html', form=form)
+
 
 @bp.route('/<int:id>')
 def view(id):
     patient = Patient.query.get_or_404(id)
     return render_template('patients/view.html', patient=patient)
 
+
 @bp.route('/<int:id>/edit', methods=['GET', 'POST'])
 def edit(id):
     patient = Patient.query.get_or_404(id)
-    if request.method == 'POST':
-        patient.name = request.form['name']
-        patient.age = int(request.form['age']) if request.form['age'] else None
-        patient.phone = request.form.get('phone', '')
-        patient.gender = request.form.get('gender', '')
-        patient.notes = request.form.get('notes', '')
+    form = PatientForm(obj=patient)
+    if form.validate_on_submit():
+        form.populate_obj(patient)
         db.session.commit()
         flash('Patient updated successfully!', 'success')
         return redirect(url_for('patients.view', id=patient.id))
-    return render_template('patients/edit.html', patient=patient)
+    return render_template('patients/edit.html', form=form, patient=patient)
+
 
 @bp.route('/<int:id>/delete', methods=['POST'])
 def delete(id):
@@ -59,3 +64,15 @@ def delete(id):
     db.session.commit()
     flash('Patient deleted successfully!', 'success')
     return redirect(url_for('patients.list'))
+
+
+@bp.route('/api/list')
+def api_list():
+    patients = Patient.query.order_by(Patient.name).all()
+    return jsonify([p.to_dict() for p in patients])
+
+
+@bp.route('/api/<int:id>')
+def api_get(id):
+    patient = Patient.query.get_or_404(id)
+    return jsonify(patient.to_dict())

@@ -13,13 +13,13 @@
         <input type="text" name="search" placeholder="Search by name or phone..." value="{{ search }}">
         <button type="submit" class="btn btn-primary">Search</button>
         {% if search %}
-        <a href="{{ url_for('patients.list') }}" class="btn btn-secondary">Clear</a>
+        <a href="{{ url_for('patients.list') }}" class="btn">Clear</a>
         {% endif %}
     </form>
 </div>
 
 <div class="table-container">
-    {% if patients %}
+    {% if patients.items %}
     <table>
         <thead>
             <tr>
@@ -32,7 +32,7 @@
             </tr>
         </thead>
         <tbody>
-            {% for patient in patients %}
+            {% for patient in patients.items %}
             <tr>
                 <td>{{ patient.id }}</td>
                 <td><a href="{{ url_for('patients.view', id=patient.id) }}">{{ patient.name }}</a></td>
@@ -50,6 +50,19 @@
             {% endfor %}
         </tbody>
     </table>
+    
+    {% if patients.has_prev or patients.has_next %}
+    <div class="pagination" style="padding: 1rem; display: flex; justify-content: center; gap: 0.5rem;">
+        {% if patients.has_prev %}
+        <a href="{{ url_for('patients.list', page=patients.prev_num, search=search) }}" class="btn btn-sm">← Previous</a>
+        {% endif %}
+        <span style="padding: 0.5rem;">Page {{ patients.page }} of {{ patients.pages }}</span>
+        {% if patients.has_next %}
+        <a href="{{ url_for('patients.list', page=patients.next_num, search=search) }}" class="btn btn-sm">Next →</a>
+        {% endif %}
+    </div>
+    {% endif %}
+    
     {% else %}
     <p class="empty-state">No patients found. <a href="{{ url_for('patients.new') }}">Add the first patient</a></p>
     {% endif %}
