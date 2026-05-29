@@ -12,12 +12,15 @@ bp = Blueprint('home', __name__)
 def index():
     today = date.today()
     
-    total_patients = Patient.query.count()
-    today_appointments = Appointment.query.filter_by(date=today).count()
-    today_visits = Visit.query.filter_by(date=today).count()
-    total_medicines = Medicine.query.count()
+    # Filter by tenant for multi-tenant support
+    tenant_id = current_user.tenant_id
     
-    recent_appointments = Appointment.query.filter_by(date=today)\
+    total_patients = Patient.query.filter_by(tenant_id=tenant_id).count()
+    today_appointments = Appointment.query.filter_by(tenant_id=tenant_id, date=today).count()
+    today_visits = Visit.query.filter_by(tenant_id=tenant_id, date=today).count()
+    total_medicines = Medicine.query.filter_by(tenant_id=tenant_id).count()
+    
+    recent_appointments = Appointment.query.filter_by(tenant_id=tenant_id, date=today)\
         .order_by(Appointment.time).limit(5).all()
     
     return render_template('index.html', 

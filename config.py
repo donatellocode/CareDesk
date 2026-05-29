@@ -33,6 +33,14 @@ class Config:
     SESSION_COOKIE_SAMESITE = 'Lax'
     JSON_SORT_KEYS = False
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB max upload
+    
+    # JWT Configuration
+    JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY') or 'jwt-secret-key-change-in-production'
+    JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=24)
+    JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=30)
+    JWT_TOKEN_LOCATION = ['headers']
+    JWT_HEADER_NAME = 'Authorization'
+    JWT_HEADER_TYPE = 'Bearer'
 
 
 class DevelopmentConfig(Config):
@@ -51,6 +59,13 @@ class ProductionConfig(Config):
         if not uri:
             raise ValueError("DATABASE_URL must be set in production")
         return uri
+    
+    @property
+    def JWT_SECRET_KEY(self):
+        key = os.environ.get('JWT_SECRET_KEY')
+        if not key:
+            raise ValueError("JWT_SECRET_KEY must be set in production")
+        return key
 
 
 class TestingConfig(Config):
@@ -58,6 +73,7 @@ class TestingConfig(Config):
     DEBUG = True
     SQLALCHEMY_DATABASE_URI = 'sqlite:///:memory:'
     WTF_CSRF_ENABLED = False
+    JWT_ACCESS_TOKEN_EXPIRES = timedelta(minutes=5)
 
 
 config = {

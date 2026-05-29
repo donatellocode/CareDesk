@@ -11,11 +11,12 @@ bp = Blueprint('patients', __name__, url_prefix='/patients')
 @bp.route('/')
 @login_required
 def list():
+    tenant_id = current_user.tenant_id
     search = request.args.get('search', '')
     page = request.args.get('page', 1, type=int)
     per_page = 20
     
-    query = Patient.query
+    query = Patient.query.filter_by(tenant_id=tenant_id)
     if search:
         query = query.filter(or_(Patient.name.ilike(f'%{search}%'), Patient.phone.ilike(f'%{search}%')))
     
@@ -33,7 +34,8 @@ def new():
             age=form.age.data,
             phone=form.phone.data,
             gender=form.gender.data,
-            notes=form.notes.data
+            notes=form.notes.data,
+            tenant_id=current_user.tenant_id
         )
         db.session.add(patient)
         db.session.commit()
@@ -45,14 +47,16 @@ def new():
 @bp.route('/<int:id>')
 @login_required
 def view(id):
-    patient = Patient.query.get_or_404(id)
+    tenant_id = current_user.tenant_id
+    patient = Patient.query.filter_by(id=id, tenant_id=tenant_id).first_or_404()
     return render_template('patients/view.html', patient=patient)
 
 
 @bp.route('/<int:id>/edit', methods=['GET', 'POST'])
 @login_required
 def edit(id):
-    patient = Patient.query.get_or_404(id)
+    tenant_id = current_user.tenant_id
+    patient = Patient.query.filter_by(id=id, tenant_id=tenant_id).first_or_404()
     form = PatientForm(obj=patient)
     if form.validate_on_submit():
         form.populate_obj(patient)
@@ -65,7 +69,8 @@ def edit(id):
 @bp.route('/<int:id>/delete', methods=['POST'])
 @login_required
 def delete(id):
-    patient = Patient.query.get_or_404(id)
+    tenant_id = current_user.tenant_id
+    patient = Patient.query.filter_by(id=id, tenant_id=tenant_id).first_or_404()
     db.session.delete(patient)
     db.session.commit()
     flash('Patient deleted successfully!', 'success')
@@ -74,11 +79,13 @@ def delete(id):
 
 @bp.route('/api/list')
 def api_list():
+    # Legacy endpoint - use /api/v1/patients instead
     patients = Patient.query.order_by(Patient.name).all()
     return jsonify([p.to_dict() for p in patients])
 
 
 @bp.route('/api/<int:id>')
 def api_get(id):
+    # Legacy endpoint - use /api/v1/patients/<id> instead
     patient = Patient.query.get_or_404(id)
     return jsonify(patient.to_dict())

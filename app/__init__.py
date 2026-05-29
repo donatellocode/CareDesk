@@ -1,12 +1,15 @@
 import logging
 import os
-from flask import Flask, jsonify, render_template, request
+from datetime import timedelta
+from flask import Flask, jsonify, render_template, request, g
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
+from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity, get_jwt
 from config import config
 
 db = SQLAlchemy()
 login_manager = LoginManager()
+jwt = JWTManager()
 
 
 def create_app(config_name=None):
@@ -37,19 +40,67 @@ def create_app(config_name=None):
     login_manager.login_message = 'Please log in to access this page.'
     login_manager.login_message_category = 'warning'
     
+    # Initialize JWT
+    jwt.init_app(app)
+    
+    # JWT additional claims loader
+    @jwt.additional_claims_loader
+    def add_claims_to_access_token(identity):
+        from app.models import User
+        user = User.query.get(int(identity))
+        if user:
+            return {
+                'tenant_id': user.tenant_id,
+                'role': user.role,
+                'full_name': user.full_name
+            }
+        return {'tenant_id': 0, 'role': 'guest'}
+    
     # Create all database tables - MUST import models first
     with app.app_context():
-        from app.models import Patient, Appointment, Visit, Medicine, Prescription, PrescriptionItem, User
+        from app.models import Patient, Appointment, Visit, Medicine, Prescription, PrescriptionItem, User, Tenant
         db.create_all()
         print("Database tables created/verified")
         
-        # Create default admin user if not exists
+        # Create default tenant if not exists
+        default_tenant = Tenant.query.filter_by(slug='default').first()
+        if not default_tenant:
+            default_tenant = Tenant(
+                name='Default Clinic',
+                slug='default',
+                subscription_plan='free'
+            )
+            db.session.add(default_tenant)
+            db.session.commit()
+            print("Default tenant created")
+        
+        # Create default super admin user if not exists
         if not User.query.filter_by(username='admin').first():
-            admin = User(username='admin', email='admin@caredesk.com', full_name='System Admin', role='admin')
+            admin = User(
+                username='admin',
+                email='admin@caredesk.com',
+                full_name='System Admin',
+                role='super_admin',
+                tenant_id=default_tenant.id
+            )
             admin.set_password('admin123')
             db.session.add(admin)
             db.session.commit()
             print("Default admin user created (username: admin, password: admin123)")
+        
+        # Create default clinic admin user if not exists
+        if not User.query.filter_by(username='clinic_admin').first():
+            clinic_admin = User(
+                username='clinic_admin',
+                email='clinic@caredesk.com',
+                full_name='Clinic Admin',
+                role='clinic_admin',
+                tenant_id=default_tenant.id
+            )
+            clinic_admin.set_password('clinic123')
+            db.session.add(clinic_admin)
+            db.session.commit()
+            print("Default clinic admin user created")
         
         # Verify tables exist
         from sqlalchemy import inspect
@@ -63,7 +114,7 @@ def create_app(config_name=None):
         migrate = Migrate()
         migrate.init_app(app, db)
     
-    from app.routes import patients, appointments, visits, medicines, prescriptions, home, auth
+    from app.routes import patients, appointments, visits, medicines, prescriptions, home, auth, api
     app.register_blueprint(patients.bp)
     app.register_blueprint(appointments.bp)
     app.register_blueprint(visits.bp)
@@ -71,6 +122,7 @@ def create_app(config_name=None):
     app.register_blueprint(prescriptions.bp)
     app.register_blueprint(home.bp)
     app.register_blueprint(auth.bp)
+    app.register_blueprint(api.bp)  # API v1 blueprint
     
     setup_logging(app)
     register_error_handlers(app)

@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_user, logout_user, login_required, current_user
 from app import db
-from app.models import User
+from app.models import User, Tenant
 from functools import wraps
 from datetime import datetime
 
@@ -14,7 +14,20 @@ def admin_required(f):
         if not current_user.is_authenticated:
             flash('Please log in to access this page.', 'warning')
             return redirect(url_for('auth.login'))
-        if current_user.role != 'admin':
+        if current_user.role not in ['super_admin', 'clinic_admin']:
+            flash('You do not have permission to access this page.', 'danger')
+            return redirect(url_for('home.index'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+
+def super_admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_authenticated:
+            flash('Please log in to access this page.', 'warning')
+            return redirect(url_for('auth.login'))
+        if current_user.role != 'super_admin':
             flash('You do not have permission to access this page.', 'danger')
             return redirect(url_for('home.index'))
         return f(*args, **kwargs)
@@ -93,7 +106,13 @@ def register():
             flash('Email already registered.', 'danger')
             return render_template('auth/register.html')
         
-        user = User(username=username, email=email, full_name=full_name, role=role)
+        user = User(
+            username=username, 
+            email=email, 
+            full_name=full_name, 
+            role=role,
+            tenant_id=current_user.tenant_id
+        )
         user.set_password(password)
         
         db.session.add(user)
@@ -108,7 +127,7 @@ def register():
 @bp.route('/users')
 @admin_required
 def users():
-    all_users = User.query.order_by(User.created_at.desc()).all()
+    all_users = User.query.filter_by(tenant_id=current_user.tenant_id).order_by(User.created_at.desc()).all()
     return render_template('auth/users.html', users=all_users)
 
 
@@ -118,6 +137,10 @@ def toggle_user_active(id):
     user = User.query.get_or_404(id)
     if user.id == current_user.id:
         flash('You cannot deactivate your own account.', 'danger')
+        return redirect(url_for('auth.users'))
+    
+    if user.tenant_id != current_user.tenant_id:
+        flash('Access denied.', 'danger')
         return redirect(url_for('auth.users'))
     
     user.is_active = not user.is_active

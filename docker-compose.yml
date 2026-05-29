@@ -9,12 +9,13 @@ services:
       - FLASK_ENV=production
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/caredesk
       - SECRET_KEY=${SECRET_KEY:-change-this-in-production}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-jwt-secret-change-in-production}
     depends_on:
       db:
         condition: service_healthy
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
       interval: 30s
       timeout: 10s
       retries: 3

@@ -11,25 +11,28 @@ bp = Blueprint('prescriptions', __name__, url_prefix='/prescriptions')
 @bp.route('/')
 @login_required
 def list():
+    tenant_id = current_user.tenant_id
     page = request.args.get('page', 1, type=int)
     per_page = 20
-    pagination = Prescription.query.order_by(Prescription.date.desc()).paginate(page=page, per_page=per_page, error_out=False)
+    pagination = Prescription.query.filter_by(tenant_id=tenant_id).order_by(Prescription.date.desc()).paginate(page=page, per_page=per_page, error_out=False)
     return render_template('prescriptions/list.html', prescriptions=pagination)
 
 
 @bp.route('/new', methods=['GET', 'POST'])
 @login_required
 def new():
+    tenant_id = current_user.tenant_id
     form = PrescriptionForm()
-    patients = Patient.query.order_by(Patient.name).all()
+    patients = Patient.query.filter_by(tenant_id=tenant_id).order_by(Patient.name).all()
     form.patient_id.choices = [(0, 'Select a patient...')] + [(p.id, p.name) for p in patients]
     
-    medicines = Medicine.query.order_by(Medicine.name).all()
-    visits = Visit.query.order_by(Visit.date.desc()).limit(100).all()
+    medicines = Medicine.query.filter_by(tenant_id=tenant_id).order_by(Medicine.name).all()
+    visits = Visit.query.filter_by(tenant_id=tenant_id).order_by(Visit.date.desc()).limit(100).all()
     form.visit_id.choices = [(0, 'None')] + [(v.id, f"{v.patient.name} - {v.date}") for v in visits]
     
     if request.method == 'POST':
         prescription = Prescription(
+            tenant_id=tenant_id,
             patient_id=int(request.form['patient_id']),
             visit_id=int(request.form['visit_id']) if request.form.get('visit_id') and request.form['visit_id'] != '0' else None,
             date=date.fromisoformat(request.form['date'])
@@ -65,21 +68,24 @@ def new():
 @bp.route('/<int:id>')
 @login_required
 def view(id):
-    prescription = Prescription.query.get_or_404(id)
+    tenant_id = current_user.tenant_id
+    prescription = Prescription.query.filter_by(id=id, tenant_id=tenant_id).first_or_404()
     return render_template('prescriptions/view.html', prescription=prescription)
 
 
 @bp.route('/<int:id>/print')
 @login_required
 def print_view(id):
-    prescription = Prescription.query.get_or_404(id)
+    tenant_id = current_user.tenant_id
+    prescription = Prescription.query.filter_by(id=id, tenant_id=tenant_id).first_or_404()
     return render_template('prescriptions/print.html', prescription=prescription)
 
 
 @bp.route('/<int:id>/delete', methods=['POST'])
 @login_required
 def delete(id):
-    prescription = Prescription.query.get_or_404(id)
+    tenant_id = current_user.tenant_id
+    prescription = Prescription.query.filter_by(id=id, tenant_id=tenant_id).first_or_404()
     db.session.delete(prescription)
     db.session.commit()
     flash('Prescription deleted successfully!', 'success')
@@ -88,11 +94,13 @@ def delete(id):
 
 @bp.route('/api/list')
 def api_list():
+    # Legacy endpoint - use /api/v1/prescriptions instead
     prescriptions = Prescription.query.order_by(Prescription.date.desc()).limit(100).all()
     return jsonify([p.to_dict() for p in prescriptions])
 
 
 @bp.route('/api/<int:id>')
 def api_get(id):
+    # Legacy endpoint - use /api/v1/prescriptions/<id> instead
     prescription = Prescription.query.get_or_404(id)
     return jsonify(prescription.to_dict())
