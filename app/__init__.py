@@ -1,10 +1,10 @@
 import logging
 import os
-from datetime import timedelta
+from datetime import datetime, timezone, timedelta
 from flask import Flask, jsonify, render_template, request, g
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
-from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity, get_jwt
+from flask_jwt_extended import JWTManager
 from config import config
 
 db = SQLAlchemy()
@@ -47,7 +47,7 @@ def create_app(config_name=None):
     @jwt.additional_claims_loader
     def add_claims_to_access_token(identity):
         from app.models import User
-        user = User.query.get(int(identity))
+        user = db.session.get(User, int(identity))
         if user:
             return {
                 'tenant_id': user.tenant_id,

@@ -3,26 +3,27 @@ API v1 Blueprint - Versioned REST API for multi-tenant SaaS
 All endpoints require JWT authentication and enforce tenant isolation.
 """
 from flask import Blueprint, jsonify, request, g
-from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
+from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt, create_access_token, create_refresh_token
 from app import db
 from app.models import Patient, Appointment, Visit, Medicine, Prescription, PrescriptionItem, User, Tenant
 from sqlalchemy import or_, func
-from datetime import datetime, date
+from datetime import datetime, timezone, date
 from functools import wraps
 
 bp = Blueprint('api', __name__, url_prefix='/api/v1')
 
-# Helper function to get tenant_id from JWT
+
 def get_tenant_id():
+    """Get tenant_id from JWT claims"""
     try:
-        jwt = get_jwt()
-        return jwt.get('tenant_id', 0)
-    except:
+        jwt_data = get_jwt()
+        return jwt_data.get('tenant_id', 0)
+    except Exception:
         return 0
 
 
-# Role-based access decorators
 def role_required(*roles):
+    """Decorator to require specific roles"""
     def decorator(f):
         @wraps(f)
         def decorated_function(*args, **kwargs):
@@ -35,8 +36,8 @@ def role_required(*roles):
     return decorator
 
 
-# Tenant isolation decorator
 def tenant_required(f):
+    """Decorator to enforce tenant isolation"""
     @wraps(f)
     def decorated_function(*args, **kwargs):
         tenant_id = get_tenant_id()
@@ -47,6 +48,13 @@ def tenant_required(f):
     return decorated_function
 
 
+def parse_date(date_input):
+    """Parse date from string or return as-is if already a date object"""
+    if isinstance(date_input, str):
+        return datetime.strptime(date_input, '%Y-%m-%d').date()
+    return date_input
+
+
 # ============= HEALTH CHECK =============
 
 @bp.route('/health')
@@ -55,7 +63,7 @@ def health():
     return jsonify({
         'status': 'healthy',
         'version': '1.0',
-        'timestamp': datetime.utcnow().isoformat()
+        'timestamp': datetime.now(timezone.utc).isoformat()
     })
 
 
@@ -77,9 +85,6 @@ def login():
     if not user.is_active:
         return jsonify({'error': 'Account is inactive'}), 401
     
-    # Create access token with tenant info in claims
-    from flask_jwt_extended import create_access_token, create_refresh_token
-    
     access_token = create_access_token(
         identity=str(user.id),
         additional_claims={
@@ -90,8 +95,7 @@ def login():
     )
     refresh_token = create_refresh_token(identity=str(user.id))
     
-    # Update last login
-    user.last_login = datetime.utcnow()
+    user.last_login = datetime.now(timezone.utc)
     db.session.commit()
     
     return jsonify({
@@ -108,7 +112,7 @@ def refresh():
     from flask_jwt_extended import create_access_token
     
     identity = get_jwt_identity()
-    user = User.query.get(int(identity))
+    user = db.session.get(User, int(identity))
     
     if not user or not user.is_active:
         return jsonify({'error': 'User not found or inactive'}), 401
@@ -131,7 +135,7 @@ def refresh():
 def me():
     """Get current user info"""
     user_id = get_jwt_identity()
-    user = User.query.get(int(user_id))
+    user = db.session.get(User, int(user_id))
     
     if not user:
         return jsonify({'error': 'User not found'}), 404
@@ -376,7 +380,6 @@ def create_appointment():
     # Parse date - handle both string and date object
     appt_date = data['date']
     if isinstance(appt_date, str):
-        from datetime import datetime
         appt_date = datetime.strptime(appt_date, '%Y-%m-%d').date()
     
     appointment = Appointment(
@@ -411,7 +414,6 @@ def update_appointment(appointment_id):
     if 'date' in data:
         appt_date = data['date']
         if isinstance(appt_date, str):
-            from datetime import datetime
             appt_date = datetime.strptime(appt_date, '%Y-%m-%d').date()
         appointment.date = appt_date
     if 'time' in data:
@@ -498,7 +500,6 @@ def create_visit():
     # Parse date - handle both string and date object
     visit_date = data['date']
     if isinstance(visit_date, str):
-        from datetime import datetime
         visit_date = datetime.strptime(visit_date, '%Y-%m-%d').date()
     
     visit = Visit(
@@ -697,7 +698,6 @@ def create_prescription():
     # Parse date - handle both string and date object
     rx_date = data['date']
     if isinstance(rx_date, str):
-        from datetime import datetime
         rx_date = datetime.strptime(rx_date, '%Y-%m-%d').date()
     
     prescription = Prescription(

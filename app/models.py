@@ -1,10 +1,30 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin
 from app import db
 
 
-class Tenant(db.Model):
+class TimestampMixin:
+    """Mixin for created_at and updated_at fields"""
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+    updated_at = db.Column(
+        db.DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc)
+    )
+
+
+class TenantMixin:
+    """Mixin for tenant-scoped models"""
+    tenant_id = db.Column(
+        db.Integer,
+        db.ForeignKey('tenants.id', ondelete='CASCADE'),
+        nullable=False,
+        index=True
+    )
+
+
+class Tenant(db.Model, TimestampMixin):
     """Multi-tenant organization/clinic model for SaaS"""
     __tablename__ = 'tenants'
     
@@ -14,8 +34,6 @@ class Tenant(db.Model):
     subscription_plan = db.Column(db.String(50), default='free')  # free, basic, premium, enterprise
     is_active = db.Column(db.Boolean, default=True)
     settings = db.Column(db.JSON, default=dict)  # White-label settings (logo, colors, etc.)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # Relationships
     users = db.relationship('User', backref='tenant', lazy='dynamic')
@@ -40,7 +58,7 @@ class Tenant(db.Model):
         }
 
 
-class User(UserMixin, db.Model):
+class User(UserMixin, db.Model, TimestampMixin):
     __tablename__ = 'users'
     
     id = db.Column(db.Integer, primary_key=True)
@@ -51,7 +69,6 @@ class User(UserMixin, db.Model):
     full_name = db.Column(db.String(100), nullable=False)
     role = db.Column(db.String(20), default='doctor', index=True)  # super_admin, clinic_admin, doctor, nurse, receptionist, patient
     is_active = db.Column(db.Boolean, default=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
     last_login = db.Column(db.DateTime, nullable=True)
     
     def set_password(self, password):
@@ -86,23 +103,22 @@ class User(UserMixin, db.Model):
 
 # User loader for Flask-Login
 from app import login_manager
+
+
 @login_manager.user_loader
 def load_user(user_id):
-    return User.query.get(int(user_id))
+    return db.session.get(User, int(user_id))
 
 
-class Patient(db.Model):
+class Patient(db.Model, TimestampMixin, TenantMixin):
     __tablename__ = 'patients'
     
     id = db.Column(db.Integer, primary_key=True)
-    tenant_id = db.Column(db.Integer, db.ForeignKey('tenants.id', ondelete='CASCADE'), nullable=False, index=True)
     name = db.Column(db.String(100), nullable=False, index=True)
     age = db.Column(db.Integer, nullable=True)
     phone = db.Column(db.String(20), nullable=True, index=True)
     gender = db.Column(db.String(10), nullable=True)
     notes = db.Column(db.Text, nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     appointments = db.relationship('Appointment', backref='patient', lazy='dynamic', cascade='all, delete-orphan')
     visits = db.relationship('Visit', backref='patient', lazy='dynamic', cascade='all, delete-orphan')
@@ -124,18 +140,15 @@ class Patient(db.Model):
         }
 
 
-class Appointment(db.Model):
+class Appointment(db.Model, TimestampMixin, TenantMixin):
     __tablename__ = 'appointments'
     
     id = db.Column(db.Integer, primary_key=True)
-    tenant_id = db.Column(db.Integer, db.ForeignKey('tenants.id', ondelete='CASCADE'), nullable=False, index=True)
     patient_id = db.Column(db.Integer, db.ForeignKey('patients.id', ondelete='CASCADE'), nullable=False, index=True)
     date = db.Column(db.Date, nullable=False, index=True)
     time = db.Column(db.String(10), nullable=False)
     status = db.Column(db.String(20), default='waiting', index=True)
     notes = db.Column(db.Text, nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     visits = db.relationship('Visit', backref='appointment', lazy='dynamic')
     
@@ -155,18 +168,15 @@ class Appointment(db.Model):
         }
 
 
-class Visit(db.Model):
+class Visit(db.Model, TimestampMixin, TenantMixin):
     __tablename__ = 'visits'
     
     id = db.Column(db.Integer, primary_key=True)
-    tenant_id = db.Column(db.Integer, db.ForeignKey('tenants.id', ondelete='CASCADE'), nullable=False, index=True)
     patient_id = db.Column(db.Integer, db.ForeignKey('patients.id', ondelete='CASCADE'), nullable=False, index=True)
     appointment_id = db.Column(db.Integer, db.ForeignKey('appointments.id', ondelete='SET NULL'), nullable=True)
     diagnosis = db.Column(db.Text, nullable=True)
     notes = db.Column(db.Text, nullable=True)
-    date = db.Column(db.Date, default=datetime.utcnow, index=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    date = db.Column(db.Date, default=lambda: datetime.now(timezone.utc).date(), index=True)
     
     def __repr__(self):
         return f'<Visit {self.id} on {self.date}>'
@@ -184,17 +194,14 @@ class Visit(db.Model):
         }
 
 
-class Medicine(db.Model):
+class Medicine(db.Model, TimestampMixin, TenantMixin):
     __tablename__ = 'medicines'
     
     id = db.Column(db.Integer, primary_key=True)
-    tenant_id = db.Column(db.Integer, db.ForeignKey('tenants.id', ondelete='CASCADE'), nullable=False, index=True)
     name = db.Column(db.String(100), nullable=False, index=True)
     category = db.Column(db.String(50), nullable=True, index=True)
     default_dose = db.Column(db.String(100), nullable=True)
     instructions = db.Column(db.Text, nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     prescription_items = db.relationship('PrescriptionItem', backref='medicine', lazy='dynamic')
     
@@ -212,17 +219,14 @@ class Medicine(db.Model):
         }
 
 
-class Prescription(db.Model):
+class Prescription(db.Model, TimestampMixin, TenantMixin):
     __tablename__ = 'prescriptions'
     
     id = db.Column(db.Integer, primary_key=True)
-    tenant_id = db.Column(db.Integer, db.ForeignKey('tenants.id', ondelete='CASCADE'), nullable=False, index=True)
     patient_id = db.Column(db.Integer, db.ForeignKey('patients.id', ondelete='CASCADE'), nullable=False, index=True)
     visit_id = db.Column(db.Integer, db.ForeignKey('visits.id', ondelete='SET NULL'), nullable=True)
-    date = db.Column(db.Date, default=datetime.utcnow, index=True)
+    date = db.Column(db.Date, default=lambda: datetime.now(timezone.utc).date(), index=True)
     notes = db.Column(db.Text, nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     items = db.relationship('PrescriptionItem', backref='prescription', lazy='dynamic', cascade='all, delete-orphan')
     
